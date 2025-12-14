@@ -1,51 +1,53 @@
 const express = require("express");
-const router = express.Router();
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
+
+const router = express.Router();
 
 router.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // check input
-    if (!email || !password) {
-      return res.status(400).json({ message: "All fields required" });
-    }
-
-    // find user
+    // Check user
     const user = await User.findOne({ email });
     if (!user) {
       return res.status(400).json({ message: "User not found" });
     }
 
-    // compare password
+    // Password check
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       return res.status(400).json({ message: "Invalid password" });
     }
 
-    // check approval
-    if (!user.is_approved) {
-      return res.status(403).json({ message: "Account not approved yet" });
+    // Admin approval check
+    if (user.role === "admin" && !user.is_approved) {
+      return res.status(403).json({
+        message: "Admin approval pending"
+      });
     }
 
-    // generate token
+    // Create token
     const token = jwt.sign(
       { id: user._id, role: user.role },
       process.env.JWT_SECRET,
       { expiresIn: "1d" }
     );
 
-    // ✅ IMPORTANT: send role
-    res.json({
+    // ✅ SEND FULL USER DATA
+    res.status(200).json({
       message: "Login successful",
       token,
-      role: user.role
+      user: {
+        id: user._id,
+        role: user.role,
+        email: user.email
+      }
     });
 
   } catch (err) {
-    console.error("LOGIN ERROR:", err);
+    console.error(err);
     res.status(500).json({ message: "Server error" });
   }
 });
