@@ -1,65 +1,51 @@
 const express = require("express");
-const router = express.Router();
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
 
-// ================= REGISTER =================
+const router = express.Router();
+
+/* REGISTER */
 router.post("/register", async (req, res) => {
   try {
-    const { first_name, last_name, email, password, role } = req.body;
+    const { first_name, last_name, email, password } = req.body;
 
-    // check user exists
     const existingUser = await User.findOne({ email });
-    if (existingUser) {
-      return res.status(400).json({ error: "User already exists" });
-    }
+    if (existingUser)
+      return res.status(400).json({ message: "User already exists" });
 
-    // hash password
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
+    const hashedPassword = await bcrypt.hash(password, 10);
 
     const user = new User({
       first_name,
       last_name,
       email,
       password: hashedPassword,
-      role,
-      is_approved: role === "admin" ? false : true
+      role: "student",
+      is_approved: true
     });
 
     await user.save();
-
-    res.json({ message: "Registration successful. Waiting for approval if admin." });
-  } catch (error) {
-    res.status(500).json({ error: "Server error" });
+    res.status(201).json({ message: "Registration successful" });
+  } catch (err) {
+    console.error("REGISTER ERROR:", err);
+    res.status(500).json({ message: "Server error" });
   }
 });
 
-// ================= LOGIN =================
+/* LOGIN */
 router.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // Check email
     const user = await User.findOne({ email });
-    if (!user) {
+    if (!user)
       return res.status(400).json({ message: "Invalid email or password" });
-    }
 
-    // Check password exists in DB
-    if (!user.password) {
-      console.error("Password missing in DB for user:", email);
-      return res.status(500).json({ message: "Server error" });
-    }
-
-    // Compare password
     const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
+    if (!isMatch)
       return res.status(400).json({ message: "Invalid email or password" });
-    }
 
-    // Create token
     const token = jwt.sign(
       { id: user._id, role: user.role },
       process.env.JWT_SECRET,
@@ -68,15 +54,12 @@ router.post("/login", async (req, res) => {
 
     res.json({
       token,
-      role: user.role,
-      email: user.email
+      role: user.role
     });
-
   } catch (err) {
-    console.error("LOGIN ERROR:", err); // 👈 VERY IMPORTANT
+    console.error("LOGIN ERROR:", err);
     res.status(500).json({ message: "Server error" });
   }
 });
-
 
 module.exports = router;
