@@ -41,39 +41,42 @@ router.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
 
+    // Check email
     const user = await User.findOne({ email });
     if (!user) {
-      return res.status(401).json({ error: "Invalid credentials" });
+      return res.status(400).json({ message: "Invalid email or password" });
     }
 
-    // admin approval check
-    if (user.role === "admin" && !user.is_approved) {
-      return res.status(403).json({ error: "Admin approval pending" });
+    // Check password exists in DB
+    if (!user.password) {
+      console.error("Password missing in DB for user:", email);
+      return res.status(500).json({ message: "Server error" });
     }
 
+    // Compare password
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      return res.status(401).json({ error: "Invalid credentials" });
+      return res.status(400).json({ message: "Invalid email or password" });
     }
 
+    // Create token
     const token = jwt.sign(
       { id: user._id, role: user.role },
-      process.env.SECRET_KEY,
+      process.env.JWT_SECRET,
       { expiresIn: "1d" }
     );
 
     res.json({
-      message: "Login successful",
       token,
-      user: {
-        id: user._id,
-        name: `${user.first_name} ${user.last_name}`,
-        role: user.role
-      }
+      role: user.role,
+      email: user.email
     });
-  } catch (error) {
-    res.status(500).json({ error: "Server error" });
+
+  } catch (err) {
+    console.error("LOGIN ERROR:", err); // 👈 VERY IMPORTANT
+    res.status(500).json({ message: "Server error" });
   }
 });
+
 
 module.exports = router;
