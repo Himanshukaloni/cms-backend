@@ -24,13 +24,13 @@ app.get("/", (req, res) => {
   res.send("✅ CMS Backend running with MongoDB");
 });
 
-/* START SERVER ONLY AFTER DB CONNECTS */
+/* Start server ONLY after DB connects */
 const PORT = process.env.PORT || 5000;
 
 (async () => {
   try {
     await connectDB();
-    app.listen(PORT, () => {
+    app.listen(PORT, "0.0.0.0", () => {
       console.log(`🚀 Server running on port ${PORT}`);
     });
   } catch (err) {
