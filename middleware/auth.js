@@ -7,7 +7,7 @@ module.exports = function (req, res, next) {
     return res.status(401).json({ message: "No token provided" });
   }
 
-  // ✅ REMOVE Bearer
+  // ✅ Correct method name
   if (authHeader.startsWith("Bearer ")) {
     authHeader = authHeader.split(" ")[1];
   }
@@ -17,6 +17,7 @@ module.exports = function (req, res, next) {
     req.user = decoded;
     next();
   } catch (err) {
+    console.error("JWT ERROR:", err.message);
     return res.status(401).json({ message: "Invalid or expired token" });
   }
 };
