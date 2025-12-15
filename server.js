@@ -10,21 +10,21 @@ const adminRoutes = require("./routes/admin");
 
 const app = express();
 
-/* Middleware */
+/* ================= MIDDLEWARE ================= */
 app.use(cors());
 app.use(express.json());
 
-/* Routes */
+/* ================= ROUTES ================= */
 app.use("/auth", authRoutes);
 app.use("/complaints", complaintRoutes);
 app.use("/admin", adminRoutes);
 
-/* Health check */
+/* ================= HEALTH CHECK ================= */
 app.get("/", (req, res) => {
-  res.send("✅ CMS Backend running with MongoDB");
+  res.json({ message: "✅ CMS Backend running with MongoDB" });
 });
 
-/* Start server ONLY after DB connects */
+/* ================= START SERVER ================= */
 const PORT = process.env.PORT || 5000;
 
 (async () => {
