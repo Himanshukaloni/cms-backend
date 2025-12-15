@@ -4,20 +4,24 @@ const UserSchema = new mongoose.Schema(
   {
     first_name: {
       type: String,
-      required: true
+      required: true,
+      trim: true
     },
     last_name: {
       type: String,
-      required: true
+      required: true,
+      trim: true
     },
     email: {
       type: String,
       required: true,
-      unique: true
+      unique: true,
+      lowercase: true,
+      trim: true
     },
     password: {
       type: String,
-      required: true   // ✅ VERY IMPORTANT
+      required: true   // 🔐 hashed password
     },
     role: {
       type: String,
@@ -29,7 +33,9 @@ const UserSchema = new mongoose.Schema(
       default: false
     }
   },
-  { timestamps: true }
+  {
+    timestamps: true
+  }
 );
 
 module.exports = mongoose.model("User", UserSchema);
